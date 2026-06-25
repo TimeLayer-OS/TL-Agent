@@ -1,0 +1,20 @@
+{
+  "tl_agent_version": "1.0",
+  "bundle_id": "tl_bundle_example_001",
+  "bundle_type": "segment",
+  "segment_id": "segment_01",
+  "owner_id": "user_cabinet_example",
+  "created_at": "2026-06-24T00:00:00Z",
+  "topology_id": "topo_project_review_001",
+  "receipt_count": 1,
+  "export_mode": "portable",
+  "agent_can_write": false,
+  "agent_can_issue_receipts": false,
+  "no_receipt_no_action": true,
+  "tlsig_roster": "../../roster.txt",
+  "tlsig_k": 2,
+  "tlsig_mode": "by_operator",
+  "actions": [
+    "action_read_files"
+  ]
+}

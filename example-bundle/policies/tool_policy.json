@@ -1,0 +1,19 @@
+{
+  "allowed_tools": [
+    "read_file",
+    "list_directory",
+    "summarize",
+    "create_report",
+    "write_file"
+  ],
+  "forbidden_tools": [
+    "delete_file",
+    "send_email",
+    "network_post",
+    "payment",
+    "system_modify",
+    "execute_code"
+  ],
+  "default_network_allowed": false,
+  "default_write_allowed": false
+}

@@ -1,0 +1,7 @@
+target/
+deploy_key.txt
+ОТЧЁТ-*.md
+PLAN.md
+*.db
+*.log
+.DS_Store

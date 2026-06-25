@@ -1,0 +1,11 @@
+{
+  "stop_on_missing_receipt": true,
+  "stop_on_invalid_receipt": true,
+  "stop_on_invalid_tlsig": true,
+  "stop_on_scope_mismatch": true,
+  "stop_on_context_uncertainty": true,
+  "stop_on_topology_conflict": true,
+  "stop_on_revoked_receipt": true,
+  "stop_on_expired_receipt": true,
+  "require_user_review_after_stop": true
+}

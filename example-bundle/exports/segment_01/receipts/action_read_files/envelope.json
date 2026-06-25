@@ -1,0 +1,29 @@
+{
+  "tl_agent_version": "1.0",
+  "receipt_id": "tlr_20260624_000001",
+  "receipt_type": "permission_receipt",
+  "topology_id": "topo_project_review_001",
+  "action_id": "action_read_files",
+  "label": "Read project files",
+  "issued_by": "user_cabinet_example",
+  "issued_at": "2026-06-24T00:00:00Z",
+  "valid_from": "2026-06-24T00:00:00Z",
+  "valid_until": null,
+  "status": "active",
+  "previous_receipt_id": null,
+  "allowed_next_actions": [
+    "action_stop_for_review"
+  ],
+  "scope": {
+    "paths": ["/project/docs"],
+    "read_only": true,
+    "network_allowed": false,
+    "write_allowed": false
+  },
+  "tlsig_file": "proof.tlsig",
+  "tlsig_workflow_id": "trial10-cohort",
+  "tlsig_step_index": 38868,
+  "tlsig_issuer": "tl-0",
+  "tlsig_roster_epoch": 2,
+  "tlsig_doc_digest": "4f3b85d2eaaec5c3bffde5d4eff6887d7db49540af5489e6298d5ea06781acff"
+}

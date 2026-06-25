@@ -1,0 +1,10 @@
+{
+  "agent_can_issue_receipts": false,
+  "agent_can_modify_receipts": false,
+  "agent_can_modify_topology": false,
+  "agent_can_request_next_receipt": true,
+  "agent_can_execute_without_receipt": false,
+  "agent_must_stop_on_missing_context": true,
+  "agent_must_report_invalid_receipt": true,
+  "text_is_not_proof": true
+}
