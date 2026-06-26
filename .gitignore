@@ -5,3 +5,6 @@ PLAN.md
 *.db
 *.log
 .DS_Store
+.tools/
+example-bundle.bak-*/
+gen_example_bundle.py

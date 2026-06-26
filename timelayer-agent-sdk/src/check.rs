@@ -9,11 +9,11 @@ impl AgentBundle {
     ///   1. Receipt exists in bundle
     ///   2. Envelope is active (not revoked / expired)
     ///   3. Topology declares this action
-    ///   4. .tlsig verifies VALID against roster (offline)
+    ///   4. cert.tlcert + bundle.tlbundle verify VALID offline (embedded roster)
     ///   5. → Allow
     pub fn check_action(&self, action_id: &str) -> CheckResult {
         // 1. Receipt present
-        let envelope: &crate::types::Envelope = match self.envelopes.get(action_id).map(|(e, _)| e) {
+        let envelope: &crate::types::Envelope = match self.envelopes.get(action_id).map(|(e, _, _)| e) {
             Some(e) => e,
             None => {
                 return CheckResult::Stop {
@@ -131,7 +131,7 @@ impl AgentBundle {
         let envelope = self
             .envelopes
             .get(action_id)
-            .map(|(e, _)| e)
+            .map(|(e, _, _)| e)
             .ok_or_else(|| SdkError::MissingReceipt(action_id.to_string()))?;
 
         let entry = serde_json::json!({

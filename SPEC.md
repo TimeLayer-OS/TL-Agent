@@ -21,13 +21,14 @@
 │  status, topology_id, issued_at...       │
 │                                          │
 │  ┌───────────────────────────────────┐   │
-│  │  proof.tlsig  (нотариальная)      │   │
-│  │  подпись кворума нод, неизменна  │   │
+│  │  cert.tlcert + bundle.tlbundle    │   │
+│  │  подпись кворума нод, неизменны   │   │
 │  └───────────────────────────────────┘   │
 └─────────────────────────────────────────┘
 ```
 
-`.tlsig` — нотариальный документ, не трогается никогда.
+Нотариальная квитанция — это **пара** `cert.tlcert` + `bundle.tlbundle`
+(ровно то, что отдаёт нотаризация сети); проверяются вместе, не трогаются никогда.
 `envelope.json` — агентская обёртка с метаданными.
 Вместе они образуют **Receipt Action Unit**.
 
@@ -46,7 +47,8 @@ agent-bundle/
   receipts/
     <action_id>/
       envelope.json          ← метаданные действия
-      proof.tlsig            ← нотариальная квитанция (нетронутая)
+      cert.tlcert            ← нотариальный сертификат (нетронутый)
+      bundle.tlbundle        ← нотариальный бандл подписей (проверяется с cert)
   exports/
     segment_01/              ← часть топологии для выдачи агенту
     segment_02/
@@ -78,9 +80,9 @@ agent-bundle/
     "read_only": true,
     "network_allowed": false
   },
-  "tlsig_file": "proof.tlsig",
-  "tlsig_doc_digest": "<blake3 hex из .tlsig>",
-  "content_digest": "<blake3 hex самого envelope.json без этого поля>"
+  "cert_file": "cert.tlcert",
+  "bundle_file": "bundle.tlbundle",
+  "action_hash_sha256": "<sha256 hex действия, которое нотаризовано>"
 }
 ```
 

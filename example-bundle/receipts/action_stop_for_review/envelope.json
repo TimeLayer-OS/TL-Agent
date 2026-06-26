@@ -1,16 +1,16 @@
 {
-  "tl_agent_version": "1.0",
-  "receipt_id": "tlr_20260624_000004",
-  "receipt_type": "stop_receipt",
+  "receipt_id": "tlr_20260626_000004",
   "topology_id": "topo_project_review_001",
   "action_id": "action_stop_for_review",
+  "status": "active",
+  "tl_agent_version": "1.0",
+  "receipt_type": "stop_receipt",
   "label": "Stop and wait for user review",
   "issued_by": "user_cabinet_example",
-  "issued_at": "2026-06-24T00:00:00Z",
-  "valid_from": "2026-06-24T00:00:00Z",
+  "issued_at": "2026-06-26T00:00:00Z",
+  "valid_from": "2026-06-26T00:00:00Z",
   "valid_until": null,
-  "status": "active",
-  "previous_receipt_id": null,
+  "previous_receipt_id": "tlr_20260626_000003",
   "allowed_next_actions": [],
   "scope": {
     "paths": [],
@@ -18,10 +18,7 @@
     "network_allowed": false,
     "write_allowed": false
   },
-  "tlsig_file": "proof.tlsig",
-  "tlsig_workflow_id": "trial10-cohort",
-  "tlsig_step_index": 38871,
-  "tlsig_issuer": "tl-0",
-  "tlsig_roster_epoch": 2,
-  "tlsig_doc_digest": "1a6c51bbcaaba4e3571a205856cbb8199a8ba503b361d8875ebdbea2f822cf10"
+  "cert_file": "cert.tlcert",
+  "bundle_file": "bundle.tlbundle",
+  "action_hash_sha256": "7cb3781fc01aa235d414a065d4fec2c1d11662f34c7c9381b858760d0e1c79bc"
 }

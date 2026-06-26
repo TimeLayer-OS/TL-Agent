@@ -1,30 +1,38 @@
 {
   "topology_id": "topo_project_review_001",
   "name": "Project Review Topology",
-  "description": "AI agent reviews project files, summarizes findings, creates a report, then stops for user review.",
   "mode": "receipt-gated",
-  "created_at": "2026-06-24T00:00:00Z",
+  "created_at": "2026-06-26T00:00:00Z",
   "entry_action": "action_read_files",
   "nodes": [
     {
       "action_id": "action_read_files",
       "label": "Read project files",
-      "required_receipt_types": ["permission_receipt", "scope_receipt"]
+      "required_receipt_types": [
+        "permission_receipt",
+        "scope_receipt"
+      ]
     },
     {
       "action_id": "action_summarize",
       "label": "Summarize findings",
-      "required_receipt_types": ["permission_receipt"]
+      "required_receipt_types": [
+        "permission_receipt"
+      ]
     },
     {
       "action_id": "action_create_report",
       "label": "Create report draft",
-      "required_receipt_types": ["permission_receipt"]
+      "required_receipt_types": [
+        "permission_receipt"
+      ]
     },
     {
       "action_id": "action_stop_for_review",
       "label": "Stop and wait for user review",
-      "required_receipt_types": ["stop_receipt"]
+      "required_receipt_types": [
+        "stop_receipt"
+      ]
     }
   ],
   "edges": [

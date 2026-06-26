@@ -1,9 +1,10 @@
 [package]
 name = "timelayer-agent-sdk"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
-description = "TimeLayer Receipt-Gated Agent SDK — validates agent bundles offline against notarial .tlsig receipts"
-license = "MIT"
+description = "TimeLayer Receipt-Gated Agent SDK — validates agent bundles offline against notarial cert+bundle receipts"
+license = "Apache-2.0"
+repository = "https://github.com/TimeLayer-OS/TL-Agent"
 
 [lib]
 name = "timelayer_agent_sdk"

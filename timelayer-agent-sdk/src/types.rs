@@ -4,21 +4,41 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Manifest {
-    pub tl_agent_version: String,
-    pub bundle_id: String,
-    pub bundle_type: String,
-    pub segment_id: Option<String>,
-    pub owner_id: String,
-    pub created_at: String,
+    // The only fields the gate actually needs: which topology this bundle
+    // belongs to, and the list of actions to load envelopes for.
     pub topology_id: String,
-    pub receipt_count: usize,
-    pub agent_can_write: bool,
-    pub agent_can_issue_receipts: bool,
-    pub no_receipt_no_action: bool,
-    pub tlsig_roster: String,
-    pub tlsig_k: u32,
-    pub tlsig_mode: String,
     pub actions: Vec<String>,
+
+    // Everything below is informational metadata, defaulted so a bundle still
+    // loads if a field is absent. The real proof is the cert+bundle pair the
+    // verifier checks — not these fields. tlsig_roster/k/mode are vestigial:
+    // the deployed timelayer-verifier embeds the roster and takes no such args.
+    #[serde(default)]
+    pub tl_agent_version: String,
+    #[serde(default)]
+    pub bundle_id: String,
+    #[serde(default)]
+    pub bundle_type: String,
+    #[serde(default)]
+    pub segment_id: Option<String>,
+    #[serde(default)]
+    pub owner_id: String,
+    #[serde(default)]
+    pub created_at: String,
+    #[serde(default)]
+    pub receipt_count: usize,
+    #[serde(default)]
+    pub agent_can_write: bool,
+    #[serde(default)]
+    pub agent_can_issue_receipts: bool,
+    #[serde(default)]
+    pub no_receipt_no_action: bool,
+    #[serde(default)]
+    pub tlsig_roster: String,
+    #[serde(default)]
+    pub tlsig_k: u32,
+    #[serde(default)]
+    pub tlsig_mode: String,
 }
 
 // ---------- topology.json ----------
@@ -26,7 +46,10 @@ pub struct Manifest {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct TopologyNode {
     pub action_id: String,
+    #[serde(default)]
     pub label: String,
+    // Accept the cabinet's historical `required_receipts` key as an alias.
+    #[serde(default, alias = "required_receipts")]
     pub required_receipt_types: Vec<String>,
 }
 
@@ -46,6 +69,7 @@ pub struct Topology {
     pub mode: String,
     #[serde(default)]
     pub created_at: String,
+    #[serde(default)]
     pub entry_action: String,
     pub nodes: Vec<TopologyNode>,
     pub edges: Vec<TopologyEdge>,
@@ -76,35 +100,60 @@ impl Topology {
 
 // ---------- envelope.json ----------
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct Scope {
+    #[serde(default)]
     pub paths: Vec<String>,
+    #[serde(default)]
     pub read_only: bool,
+    #[serde(default)]
     pub network_allowed: bool,
+    #[serde(default)]
     pub write_allowed: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Envelope {
-    pub tl_agent_version: String,
+    // Gate-relevant fields the loader cross-checks and the gate reads.
     pub receipt_id: String,
-    pub receipt_type: String,
     pub topology_id: String,
     pub action_id: String,
-    pub label: String,
-    pub issued_by: String,
-    pub issued_at: String,
-    pub valid_from: String,
-    pub valid_until: Option<String>,
     pub status: String,
+
+    // Soft metadata — defaulted so an envelope still loads if absent.
+    #[serde(default)]
+    pub tl_agent_version: String,
+    #[serde(default)]
+    pub receipt_type: String,
+    #[serde(default)]
+    pub label: String,
+    #[serde(default)]
+    pub issued_by: String,
+    #[serde(default)]
+    pub issued_at: String,
+    #[serde(default)]
+    pub valid_from: String,
+    #[serde(default)]
+    pub valid_until: Option<String>,
+    #[serde(default)]
     pub previous_receipt_id: Option<String>,
+    #[serde(default)]
     pub allowed_next_actions: Vec<String>,
+    #[serde(default)]
     pub scope: Scope,
+    // tlsig_* metadata lives inside the cert/bundle binary; the SDK does not
+    // require it duplicated in the envelope (path A — lightened schema).
+    #[serde(default)]
     pub tlsig_file: String,
+    #[serde(default)]
     pub tlsig_workflow_id: String,
+    #[serde(default)]
     pub tlsig_step_index: u64,
+    #[serde(default)]
     pub tlsig_issuer: String,
+    #[serde(default)]
     pub tlsig_roster_epoch: u64,
+    #[serde(default)]
     pub tlsig_doc_digest: String,
 }
 

@@ -12,12 +12,10 @@ pub struct AgentBundle {
     pub topology: Topology,
     pub agent_policy: AgentPolicy,
     pub stop_policy: StopPolicy,
-    /// action_id → (envelope, absolute path to proof.tlsig)
-    pub(crate) envelopes: HashMap<String, (Envelope, PathBuf)>,
+    /// action_id → (envelope, cert.tlcert path, bundle.tlbundle path)
+    pub(crate) envelopes: HashMap<String, (Envelope, PathBuf, PathBuf)>,
     /// absolute path to timelayer-verifier binary
     verifier_path: PathBuf,
-    /// absolute path to roster.txt
-    roster_path: PathBuf,
 }
 
 impl AgentBundle {
@@ -54,28 +52,33 @@ impl AgentBundle {
         let agent_policy: AgentPolicy = load_json_or_default(&root.join("policies/agent_policy.json"));
         let stop_policy: StopPolicy = load_json_or_default(&root.join("policies/stop_policy.json"));
 
-        // roster path (relative to bundle root as declared in manifest)
-        let roster_path = root.join(&manifest.tlsig_roster);
-
         // verifier path resolution
         let verifier_path = resolve_verifier(&root, verifier_hint)?;
 
-        // load all envelopes
+        // load all envelopes. Each action carries a real notarial proof as two
+        // binary blobs the deployed verifier checks together: cert.tlcert +
+        // bundle.tlbundle (the exact pair the gateway's /v1/notarize returns).
         let receipts_dir = root.join("receipts");
         let mut envelopes = HashMap::new();
         for action_id in &manifest.actions {
             let action_dir = receipts_dir.join(action_id);
             let env_path = action_dir.join("envelope.json");
-            let tlsig_path = action_dir.join("proof.tlsig");
+            let cert_path = action_dir.join("cert.tlcert");
+            let bundle_path = action_dir.join("bundle.tlbundle");
 
             if !env_path.exists() {
                 return Err(SdkError::BundleCorrupt(format!(
                     "envelope.json missing for action '{action_id}'"
                 )));
             }
-            if !tlsig_path.exists() {
+            if !cert_path.exists() {
                 return Err(SdkError::BundleCorrupt(format!(
-                    "proof.tlsig missing for action '{action_id}'"
+                    "cert.tlcert missing for action '{action_id}'"
+                )));
+            }
+            if !bundle_path.exists() {
+                return Err(SdkError::BundleCorrupt(format!(
+                    "bundle.tlbundle missing for action '{action_id}'"
                 )));
             }
 
@@ -93,7 +96,7 @@ impl AgentBundle {
                 )));
             }
 
-            envelopes.insert(action_id.clone(), (envelope, tlsig_path));
+            envelopes.insert(action_id.clone(), (envelope, cert_path, bundle_path));
         }
 
         Ok(Self {
@@ -104,18 +107,22 @@ impl AgentBundle {
             stop_policy,
             envelopes,
             verifier_path,
-            roster_path,
         })
     }
 
     /// Returns the envelope for an action without running any checks.
     pub fn envelope(&self, action_id: &str) -> Option<&Envelope> {
-        self.envelopes.get(action_id).map(|(e, _)| e)
+        self.envelopes.get(action_id).map(|(e, _, _)| e)
     }
 
-    /// Returns the path to proof.tlsig for an action.
-    pub fn tlsig_path(&self, action_id: &str) -> Option<&Path> {
-        self.envelopes.get(action_id).map(|(_, p)| p.as_path())
+    /// Returns the path to cert.tlcert for an action.
+    pub fn cert_path(&self, action_id: &str) -> Option<&Path> {
+        self.envelopes.get(action_id).map(|(_, c, _)| c.as_path())
+    }
+
+    /// Returns the path to bundle.tlbundle for an action.
+    pub fn bundle_path(&self, action_id: &str) -> Option<&Path> {
+        self.envelopes.get(action_id).map(|(_, _, b)| b.as_path())
     }
 
     /// Returns all action_ids in this bundle.
@@ -128,23 +135,18 @@ impl AgentBundle {
         self.topology.next_actions(action_id)
     }
 
-    /// Checks if timelayer-verifier and roster are reachable.
+    /// Checks if timelayer-verifier is reachable. The roster is embedded in the
+    /// deployed verifier, so no separate roster file is required.
     pub fn verifier_available(&self) -> bool {
-        self.verifier_path.exists() && self.roster_path.exists()
+        self.verifier_path.exists()
     }
 
     pub(crate) fn verify_tlsig(&self, action_id: &str) -> Result<bool, SdkError> {
-        let (_, tlsig_path) = self.envelopes.get(action_id).ok_or_else(|| {
+        let (_, cert_path, bundle_path) = self.envelopes.get(action_id).ok_or_else(|| {
             SdkError::MissingReceipt(action_id.to_string())
         })?;
 
-        verifier::verify_tlsig(
-            &self.verifier_path,
-            tlsig_path,
-            &self.roster_path,
-            self.manifest.tlsig_k,
-            &self.manifest.tlsig_mode,
-        )
+        verifier::verify_tlsig(&self.verifier_path, cert_path, bundle_path)
     }
 }
 

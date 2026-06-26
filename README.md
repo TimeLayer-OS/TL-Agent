@@ -112,8 +112,9 @@ agent-bundle/
     stop_policy.json     ← when the agent must halt
   receipts/
     <action_id>/
-      envelope.json      ← agent metadata, allowed_next_actions, references proof.tlsig
-      proof.tlsig        ← notarial receipt — never modified
+      envelope.json      ← agent metadata, allowed_next_actions, references the proof
+      cert.tlcert        ← notarial certificate — never modified
+      bundle.tlbundle    ← notarial bundle (signatures) — verified together with cert
   exports/
     segment_01/          ← partial bundle segment for handing to the agent
 ```

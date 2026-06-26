@@ -112,8 +112,9 @@ agent-bundle/
     stop_policy.json     ← когда агент обязан остановиться
   receipts/
     <action_id>/
-      envelope.json      ← метаданные действия, allowed_next_actions, ссылка на proof.tlsig
-      proof.tlsig        ← нотариальная квитанция — никогда не изменяется
+      envelope.json      ← метаданные действия, allowed_next_actions, ссылка на квитанцию
+      cert.tlcert        ← нотариальный сертификат — никогда не изменяется
+      bundle.tlbundle    ← нотариальный бандл (подписи) — проверяется вместе с cert
   exports/
     segment_01/          ← сегмент bundle для выдачи агенту
 ```
