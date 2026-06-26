@@ -167,7 +167,7 @@ cargo build --release
 
 ## Honest framing
 
-- **TimeLayer network**: 3 independent operators, quorum 2-of-3, public keys on GitHub
+- **TimeLayer network**: quorum of independent operators, public keys on GitHub
 - **Signatures**: Ed25519; hash commitment is quantum-resilient; post-quantum signing on the roadmap
 - **What TL-Agent is**: guardrails + tamper-evident audit for a cooperative agent — not a sandbox that physically locks down malicious code (except in air-gapped mode, and even then only from the agent, not the host)
 - **Not memory as recall** — provenance. Receipts do not store content and do not do semantic search
