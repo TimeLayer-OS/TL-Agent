@@ -1,8 +1,9 @@
 name: release
 
 # Cross-OS build of the tl-agent CLI. Triggers on a version tag (e.g. v0.1.1)
-# and attaches a per-OS zip to the GitHub Release. Linux/macOS/Windows are built
-# natively on their own runners (most reliable cross-compilation path).
+# and attaches a per-OS zip to the GitHub Release. Linux/Windows and macOS arm64
+# build natively; macOS x86_64 cross-compiles on the arm64 runner (the Intel
+# macos-13 runner queue is unreliable on this plan).
 
 on:
   push:
@@ -27,7 +28,7 @@ jobs:
           - os: macos-latest
             target: aarch64-apple-darwin
             name: macos-arm64
-          - os: macos-13
+          - os: macos-latest
             target: x86_64-apple-darwin
             name: macos-x86_64
           - os: windows-latest
