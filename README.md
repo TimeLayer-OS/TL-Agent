@@ -90,12 +90,52 @@ Or create the bundle structure manually per `SPEC.md`.
 
 ---
 
+## Run from a disk container or a USB flash drive (air-gapped)
+
+A bundle is just a folder, so the **same bundle is portable** — the SDK does not know or
+care whether it lives on the local disk or on a mounted drive. That is something logs and
+plain audit records cannot give you: a log is tied to the server that wrote it. A notarial
+receipt verifies **offline, on any machine, with no connection to us** — so an agent's
+permissions can travel on a USB stick and still be tamper-evident and self-verifying.
+
+**Mode 1 — disk container (default).** Keep the bundle as a folder on the host. The agent
+loads it at startup, runs every gate check locally, makes no network calls during execution.
+
+```bash
+tl-agent check ./agent-bundle action_read_files
+```
+
+**Mode 2 — air-gapped USB.** Put the permission bundle on a **read-only** removable drive
+and point results at a **separate, append-only** drive. The agent mounts the permissions,
+reads, verifies, acts — and can never write back to where its permissions live.
+
+```bash
+# permissions mounted read-only; same command, just a different path
+tl-agent check /mnt/permits/agent-bundle action_read_files
+```
+
+Splitting the media enforces INV-01 (the agent cannot issue receipts) and INV-02 (the agent
+cannot modify the bundle) **at the hardware level** — it can't overwrite its own permissions
+or inject a fake result.
+
+> **Receipts are immutable (INV-09).** You never edit a receipt on the drive. To grant more
+> actions you build a *new* bundle — the new actions get their own notarized receipts and the
+> old ones travel alongside, untouched.
+
+**Honest limits.** Hardware write-protect on the USB is real protection; a software
+"read-only" flag a privileged host process can bypass. Air-gap protects against the *agent*,
+not against a compromised host OS. And verifying existing receipts is fully offline, but
+*issuing a new* receipt still needs a moment of connectivity with the quorum. Full write-up:
+[Engineering note → Two usage modes](https://timelayer-os.com/docs/tl-agent/#modes).
+
+---
+
 ## What's in this repo
 
 | Path | Description |
 |------|-------------|
 | `timelayer-agent-sdk/` | Rust library + `tl-agent` CLI binary |
-| `example-bundle/` | Ready-to-run example bundle with real `.tlsig` receipts |
+| `example-bundle/` | Ready-to-run example bundle with real `cert.tlcert` + `bundle.tlbundle` receipts |
 | `SPEC.md` | Full specification of bundle formats and invariants |
 
 ---
@@ -119,7 +159,7 @@ agent-bundle/
     segment_01/          ← partial bundle segment for handing to the agent
 ```
 
-`.tlsig` is issued by the TimeLayer network. TL-Agent only reads and verifies it — never writes or modifies.
+`cert.tlcert` + `bundle.tlbundle` are issued by the TimeLayer network. TL-Agent only reads and verifies them — never writes or modifies.
 
 ---
 
@@ -160,7 +200,7 @@ cargo build --release
 | INV-04 | Every transition is validated against `topology.json` |
 | INV-05 | Any conflict → STOP |
 | INV-06 | The model's text output is not proof |
-| INV-09 | `.tlsig` is never modified |
+| INV-09 | The receipt (`cert.tlcert` + `bundle.tlbundle`) is never modified |
 
 **Fail-closed**: any error (missing receipt, invalid signature, unknown action) → STOP, never silent pass.
 
