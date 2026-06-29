@@ -1,5 +1,7 @@
 # TL-Agent
 
+**English** · [Русский](README.ru.md)
+
 **An agent cannot authorize its own actions. And cannot rewrite the history of what it did.**
 
 TL-Agent gives an AI agent its permissions as notarial receipts from the [TimeLayer](https://timelayer-os.com) network — receipts it cannot issue itself. Every permitted action is backed by one. The agent's history is tamper-evident and verifiable offline by any third party.
