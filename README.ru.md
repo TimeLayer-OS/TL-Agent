@@ -88,7 +88,7 @@ match bundle.check_action("action_read_files") {
 2. Каждое действие получает квитанцию, нотаризованную сетью
 3. Скачайте готовый ZIP-bundle
 
-Или создайте структуру bundle вручную по `SPEC.md`.
+Или создайте структуру bundle вручную по `SPEC.ru.md`.
 
 ---
 
@@ -98,7 +98,7 @@ match bundle.check_action("action_read_files") {
 |------|----------|
 | `timelayer-agent-sdk/` | Rust-библиотека + CLI-бинарник `tl-agent` |
 | `example-bundle/` | Готовый пример bundle с реальными квитанциями `cert.tlcert` + `bundle.tlbundle` |
-| `SPEC.md` | Полная спецификация форматов bundle и инвариантов |
+| `SPEC.ru.md` | Полная спецификация форматов bundle и инвариантов (EN: `SPEC.md`) |
 
 ---
 

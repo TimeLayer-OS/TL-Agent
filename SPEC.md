@@ -1,62 +1,65 @@
-# TL-Agent — Спецификация продукта
+# TL-Agent — Product Specification
 
-**Продукт:** Tamper-evident Agent Log — инструмент для построения управляемых AI-агентов на основе нотариальных квитанций TimeLayer.
+**English** · [Русский](SPEC.ru.md)
 
-**Где живёт:** Личный кабинет на timelayer-os.com + Rust SDK на GitHub.
+**Product:** Tamper-evident Agent Log — a tool for building governed AI agents on top of TimeLayer notarial receipts.
 
-**Язык реализации:** Rust.
+**Where it lives:** Personal cabinet on timelayer-os.com + a Rust SDK on GitHub.
 
-**Принцип:** NO VALID RECEIPT → NO ACTION.
+**Implementation language:** Rust.
+
+**Principle:** NO VALID RECEIPT → NO ACTION.
 
 ---
 
-## Архитектурное решение
+## Architectural decision
 
-Два слоя, которые никогда не смешиваются:
+Two layers that never mix:
 
 ```
 ┌─────────────────────────────────────────┐
-│  envelope.json  (агентский слой)         │
+│  envelope.json  (agent layer)            │
 │  action_id, scope, allowed_next,         │
 │  status, topology_id, issued_at...       │
 │                                          │
 │  ┌───────────────────────────────────┐   │
 │  │  cert.tlcert + bundle.tlbundle    │   │
-│  │  подпись кворума нод, неизменны   │   │
+│  │  quorum-of-nodes signature,       │   │
+│  │  immutable                        │   │
 │  └───────────────────────────────────┘   │
 └─────────────────────────────────────────┘
 ```
 
-Нотариальная квитанция — это **пара** `cert.tlcert` + `bundle.tlbundle`
-(ровно то, что отдаёт нотаризация сети); проверяются вместе, не трогаются никогда.
-`envelope.json` — агентская обёртка с метаданными.
-Вместе они образуют **Receipt Action Unit**.
+A notarial receipt is a **pair** of `cert.tlcert` + `bundle.tlbundle`
+(exactly what the network's notarization returns); they are verified together and never touched.
+`envelope.json` is the agent-side wrapper with metadata.
+Together they form a **Receipt Action Unit**.
 
 ---
 
-## Структура bundle (формат обмена)
+## Bundle structure (exchange format)
 
 ```
 agent-bundle/
-  manifest.json              ← ID bundle, владелец, дата, кол-во квитанций
-  topology.json              ← граф допустимых переходов между действиями
+  manifest.json              ← bundle ID, owner, date, receipt count
+  topology.json              ← graph of allowed transitions between actions
   policies/
-    agent_policy.json        ← что агенту запрещено делать
-    tool_policy.json         ← какие инструменты разрешены
-    stop_policy.json         ← когда агент обязан остановиться
+    agent_policy.json        ← what the agent is forbidden to do
+    tool_policy.json         ← which tools are allowed
+    stop_policy.json         ← when the agent must stop
   receipts/
     <action_id>/
-      envelope.json          ← метаданные действия
-      cert.tlcert            ← нотариальный сертификат (нетронутый)
-      bundle.tlbundle        ← нотариальный бандл подписей (проверяется с cert)
+      envelope.json          ← action metadata
+      cert.tlcert            ← notarial certificate (untouched)
+      bundle.tlbundle        ← notarial signature bundle (verified with cert)
   exports/
-    segment_01/              ← часть топологии для выдачи агенту
+    segment_01/              ← part of the topology to hand to the agent
     segment_02/
 ```
 
 ---
 
-## Формат envelope.json
+## envelope.json format
 
 ```json
 {
@@ -82,13 +85,13 @@ agent-bundle/
   },
   "cert_file": "cert.tlcert",
   "bundle_file": "bundle.tlbundle",
-  "action_hash_sha256": "<sha256 hex действия, которое нотаризовано>"
+  "action_hash_sha256": "<sha256 hex of the notarized action>"
 }
 ```
 
 ---
 
-## Формат manifest.json
+## manifest.json format
 
 ```json
 {
@@ -109,7 +112,7 @@ agent-bundle/
 
 ---
 
-## Формат topology.json
+## topology.json format
 
 ```json
 {
@@ -151,66 +154,66 @@ agent-bundle/
 
 ---
 
-## Типы квитанций (envelope.receipt_type)
+## Receipt types (envelope.receipt_type)
 
-| Тип | Назначение |
+| Type | Purpose |
 |-----|-----------|
-| `identity_receipt` | Кто создал задачу |
-| `task_receipt` | Фиксация задачи |
-| `permission_receipt` | Разрешение на действие |
-| `scope_receipt` | Границы действия |
-| `tool_receipt` | Разрешённый инструмент |
-| `execution_receipt` | Факт выполнения |
-| `result_receipt` | Результат действия |
-| `validation_receipt` | Проверка результата |
-| `stop_receipt` | Команда остановки |
-| `revoke_receipt` | Отзыв допуска |
-| `final_receipt` | Финальное состояние |
+| `identity_receipt` | Who created the task |
+| `task_receipt` | Recording the task |
+| `permission_receipt` | Permission for an action |
+| `scope_receipt` | Boundaries of an action |
+| `tool_receipt` | An allowed tool |
+| `execution_receipt` | The fact of execution |
+| `result_receipt` | The result of an action |
+| `validation_receipt` | Validation of the result |
+| `stop_receipt` | Stop command |
+| `revoke_receipt` | Revocation of access |
+| `final_receipt` | Final state |
 
 ---
 
-## Инварианты системы (нельзя нарушать)
+## System invariants (must not be violated)
 
 ```
-INV-01: Агент не выпускает валидные квитанции сам.
-INV-02: Агент не изменяет bundle пользователя.
-INV-03: Каждое действие требует permission_receipt.
-INV-04: Каждый переход проверяется по topology.json.
-INV-05: Любой конфликт → STOP.
-INV-06: Текст модели не считается доказательством.
-INV-07: PASS невозможен без validation_receipt (если требуется).
-INV-08: Пользователь хранит bundle вне платформы (офлайн).
-INV-09: .tlsig не модифицируется никогда.
-INV-10: envelope.json не заменяет .tlsig, только ссылается.
+INV-01: The agent does not issue valid receipts itself.
+INV-02: The agent does not modify the user's bundle.
+INV-03: Every action requires a permission_receipt.
+INV-04: Every transition is checked against topology.json.
+INV-05: Any conflict → STOP.
+INV-06: Model text does not count as proof.
+INV-07: PASS is impossible without a validation_receipt (when required).
+INV-08: The user keeps the bundle off-platform (offline).
+INV-09: .tlsig is never modified.
+INV-10: envelope.json does not replace .tlsig, it only references it.
 ```
 
 ---
 
-## Rust SDK — публичный API (plan)
+## Rust SDK — public API (plan)
 
 ```rust
-// Загрузить bundle
+// Load a bundle
 let bundle = AgentBundle::load("./agent-bundle")?;
 
-// Проверить перед действием
+// Check before an action
 match bundle.check_action("action_read_files") {
-    Allow(receipt) => { /* выполнить действие */ }
-    Stop(reason)   => { /* остановиться */ }
+    Allow(receipt) => { /* perform the action */ }
+    Stop(reason)   => { /* stop */ }
 }
 
-// Запросить следующий допустимый переход
+// Request the next allowed transition
 let next = bundle.allowed_next("action_read_files")?;
 
-// Зафиксировать выполнение (локально, не выдаёт .tlsig)
+// Record execution (locally, does not issue .tlsig)
 bundle.record_execution("action_read_files", &result_hash)?;
 ```
 
 ---
 
-## Три части продукта
+## Three parts of the product
 
-| Часть | Что | Где |
+| Part | What | Where |
 |-------|-----|-----|
-| 1. Формат bundle | JSON-спецификация | Этот файл |
-| 2. Rust SDK | Библиотека валидации | GitHub: timelayer-agent-sdk |
+| 1. Bundle format | JSON specification | This file |
+| 2. Rust SDK | Validation library | GitHub: timelayer-agent-sdk |
 | 3. Web UI | Topology builder | timelayer-os.com/cabinet |
