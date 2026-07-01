@@ -182,8 +182,8 @@ INV-05: Любой конфликт → STOP.
 INV-06: Текст модели не считается доказательством.
 INV-07: PASS невозможен без validation_receipt (если требуется).
 INV-08: Пользователь хранит bundle вне платформы (офлайн).
-INV-09: .tlsig не модифицируется никогда.
-INV-10: envelope.json не заменяет .tlsig, только ссылается.
+INV-09: Квитанция (cert.tlcert + bundle.tlbundle) не модифицируется никогда.
+INV-10: envelope.json не заменяет квитанцию, только ссылается на неё.
 ```
 
 ---
@@ -203,7 +203,7 @@ match bundle.check_action("action_read_files") {
 // Запросить следующий допустимый переход
 let next = bundle.allowed_next("action_read_files")?;
 
-// Зафиксировать выполнение (локально, не выдаёт .tlsig)
+// Зафиксировать выполнение (локально, не выдаёт квитанцию)
 bundle.record_execution("action_read_files", &result_hash)?;
 ```
 

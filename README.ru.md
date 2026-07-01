@@ -189,4 +189,4 @@ cargo build --release
 
 Часть экосистемы [TimeLayer](https://timelayer-os.com).
 
-Лицензия: MIT
+Лицензия: Apache 2.0

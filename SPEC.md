@@ -183,8 +183,8 @@ INV-05: Any conflict → STOP.
 INV-06: Model text does not count as proof.
 INV-07: PASS is impossible without a validation_receipt (when required).
 INV-08: The user keeps the bundle off-platform (offline).
-INV-09: .tlsig is never modified.
-INV-10: envelope.json does not replace .tlsig, it only references it.
+INV-09: The receipt (cert.tlcert + bundle.tlbundle) is never modified.
+INV-10: envelope.json does not replace the receipt, it only references it.
 ```
 
 ---
@@ -204,7 +204,7 @@ match bundle.check_action("action_read_files") {
 // Request the next allowed transition
 let next = bundle.allowed_next("action_read_files")?;
 
-// Record execution (locally, does not issue .tlsig)
+// Record execution (locally, does not issue a receipt)
 bundle.record_execution("action_read_files", &result_hash)?;
 ```
 
