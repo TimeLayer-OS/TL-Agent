@@ -208,6 +208,20 @@ cargo build --release
 
 ---
 
+## What v0.1.x enforces — and what it does not
+
+**v0.1.x enforces the receipt gate.** An action runs only if:
+
+- its envelope is **active** — not revoked, not expired;
+- the action is **declared in the topology**; and
+- `cert.tlcert` + `bundle.tlbundle` **pass the external `timelayer-verifier`** (exact verdict `VALID FINAL`).
+
+**Not enforced in v0.1.x.** Scope and policy fields (`read_only`, `network_allowed`, `write_allowed`) are declared in the bundle types but are **not enforced** — enforcement is on the roadmap (v0.2 candidate).
+
+TL-Agent is a **receipt gate and tamper-evident provenance layer, not a sandbox.**
+
+---
+
 ## Honest framing
 
 - **TimeLayer network**: quorum of independent operators, public keys on GitHub

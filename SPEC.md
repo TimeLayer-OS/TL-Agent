@@ -187,6 +187,8 @@ INV-09: The receipt (cert.tlcert + bundle.tlbundle) is never modified.
 INV-10: envelope.json does not replace the receipt, it only references it.
 ```
 
+**Enforcement status (v0.1.x).** These invariants describe the receipt gate that v0.1.x enforces: an action runs only if its envelope is active (not revoked, not expired), the action is declared in the topology, and `cert.tlcert` + `bundle.tlbundle` pass the external `timelayer-verifier` (exact verdict `VALID FINAL`). The scope/policy fields (`read_only`, `network_allowed`, `write_allowed`) are declared in the types but are NOT enforced in v0.1.x — enforcement is a v0.2 candidate. TL-Agent is a receipt gate and tamper-evident provenance layer, not a sandbox.
+
 ---
 
 ## Rust SDK — public API (plan)
