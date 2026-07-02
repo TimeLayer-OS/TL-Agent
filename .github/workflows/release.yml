@@ -45,6 +45,9 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
+      - name: Test
+        run: cargo test --workspace
+
       - name: Build
         run: cargo build --release --bin tl-agent --target ${{ matrix.target }}
 
