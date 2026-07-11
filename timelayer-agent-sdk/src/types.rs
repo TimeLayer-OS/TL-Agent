@@ -155,9 +155,52 @@ pub struct Envelope {
     pub tlsig_roster_epoch: u64,
     #[serde(default)]
     pub tlsig_doc_digest: String,
+    /// Intent-commitment scheme this envelope's receipt attests.
+    /// "tl-intent/1" = the receipt's subject is `intent_digest_v1()`, recomputed
+    /// by the gate from the envelope's gate-relevant fields on every check.
+    /// Empty = legacy envelope (see the binding policy in `check_action`).
+    #[serde(default)]
+    pub intent_scheme: String,
 }
 
 impl Envelope {
+    /// Canonical intent commitment, scheme "tl-intent/1".
+    ///
+    /// This is the digest the receipt must attest (verifier `--expect`). It is
+    /// RECOMPUTED from the envelope's gate-relevant fields on every check, never
+    /// read from a mutable field: edit any committed field after issuance and
+    /// the receipt stops matching (P0-01, receipt transplant).
+    ///
+    /// Canonical form: serde_json serialization with alphabetically sorted keys
+    /// (serde_json's default Map ordering), no extra whitespace; absent optionals
+    /// serialize as null. `status` is deliberately NOT committed — it is mutable
+    /// lifecycle state; revocation lives in its own contour.
+    pub fn intent_digest_v1(&self) -> String {
+        use sha2::{Digest, Sha256};
+        let canonical = serde_json::json!({
+            "schema": "tl-intent/1",
+            "topology_id": self.topology_id,
+            "action_id": self.action_id,
+            "receipt_id": self.receipt_id,
+            "receipt_type": self.receipt_type,
+            "valid_from": self.valid_from,
+            "valid_until": self.valid_until,
+            "previous_receipt_id": self.previous_receipt_id,
+            "allowed_next_actions": self.allowed_next_actions,
+            "scope": {
+                "paths": self.scope.paths,
+                "read_only": self.scope.read_only,
+                "network_allowed": self.scope.network_allowed,
+                "write_allowed": self.scope.write_allowed,
+            },
+        });
+        let bytes = serde_json::to_vec(&canonical).expect("intent canonicalization");
+        Sha256::digest(&bytes)
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect()
+    }
+
     pub fn is_active(&self) -> bool {
         self.status == "active"
     }
@@ -256,6 +299,9 @@ pub enum StopReason {
     ScopeMismatch,
     PolicyViolation,
     BundleCorrupt,
+    /// Envelope declares no intent commitment: the receipt may be valid in
+    /// itself, but nothing binds it to THIS action (P0-01).
+    UnboundReceipt,
 }
 
 impl std::fmt::Display for StopReason {
@@ -270,6 +316,7 @@ impl std::fmt::Display for StopReason {
             Self::ScopeMismatch => write!(f, "SCOPE_MISMATCH"),
             Self::PolicyViolation => write!(f, "POLICY_VIOLATION"),
             Self::BundleCorrupt => write!(f, "BUNDLE_CORRUPT"),
+            Self::UnboundReceipt => write!(f, "UNBOUND_RECEIPT"),
         }
     }
 }

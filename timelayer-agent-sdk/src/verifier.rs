@@ -39,6 +39,54 @@ pub fn verify_tlsig(
     Ok(is_valid_final(output.status.success(), &stdout))
 }
 
+/// Probes whether the installed verifier knows the `--expect` flag (v2.0.0+),
+/// i.e. can cryptographically bind a receipt to an expected subject digest.
+/// Any probe failure counts as "does not support" (fail-closed).
+pub fn verifier_supports_expect(verifier_path: &Path) -> bool {
+    Command::new(verifier_path)
+        .args(["verify", "--help"])
+        .output()
+        .map(|o| {
+            let text = format!(
+                "{}{}",
+                String::from_utf8_lossy(&o.stdout),
+                String::from_utf8_lossy(&o.stderr)
+            );
+            text.contains("--expect")
+        })
+        .unwrap_or(false)
+}
+
+/// Like `verify_tlsig`, but additionally requires the receipt to attest exactly
+/// `expected_hex` (the verifier's `--expect` flag). A receipt that is valid in
+/// itself but attests a different subject returns Ok(false) — this is the
+/// binding that stops receipt transplant (P0-01).
+pub fn verify_tlsig_expect(
+    verifier_path: &Path,
+    cert_path: &Path,
+    bundle_path: &Path,
+    expected_hex: &str,
+) -> Result<bool, SdkError> {
+    if !verifier_path.exists() {
+        return Err(SdkError::VerifierNotFound(
+            verifier_path.display().to_string(),
+        ));
+    }
+
+    let output = Command::new(verifier_path)
+        .arg("verify")
+        .arg(cert_path)
+        .arg(bundle_path)
+        .arg("--expect")
+        .arg(expected_hex)
+        .output()
+        .map_err(SdkError::Io)?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    Ok(is_valid_final(output.status.success(), &stdout))
+}
+
 /// Returns the raw verifier output string for logging purposes.
 pub fn verify_tlsig_verbose(
     verifier_path: &Path,

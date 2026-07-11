@@ -22,5 +22,6 @@
   },
   "cert_file": "cert.tlcert",
   "bundle_file": "bundle.tlbundle",
-  "action_hash_sha256": "2ffe8d7800f30e71ff3dfb2db4cd2a655612d6b87cb5af4003fe668ebdae165a"
+  "action_hash_sha256": "2ffe8d7800f30e71ff3dfb2db4cd2a655612d6b87cb5af4003fe668ebdae165a",
+  "intent_scheme": "tl-intent/1"
 }

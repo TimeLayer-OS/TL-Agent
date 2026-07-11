@@ -171,7 +171,8 @@ agent-bundle/
 tl-agent check  <bundle_dir> <action_id>              Gate check. Exit 0=ALLOW, 1=STOP.
 tl-agent next   <bundle_dir> <action_id>              List allowed next actions per topology.
 tl-agent audit  <bundle_dir>                          Verify every action in the bundle.
-tl-agent record <bundle_dir> <action_id> <sha256>     Append to execution_log.jsonl.
+tl-agent record <bundle_dir> <action_id> <sha256>     Append to execution_log.jsonl (diagnostics, not proof).
+tl-agent intent-digest <envelope.json>                Print the tl-intent/1 commitment to notarize.
 
 Options:
   --verifier <path>    Path to timelayer-verifier binary.
@@ -210,13 +211,24 @@ cargo build --release
 
 ## What v0.1.x enforces — and what it does not
 
-**v0.1.x enforces the receipt gate.** An action runs only if:
+**v0.2.x enforces the receipt gate, bound to the action.** An action runs only if:
 
 - its envelope is **active** — not revoked, not expired;
-- the action is **declared in the topology**; and
-- `cert.tlcert` + `bundle.tlbundle` **pass the external `timelayer-verifier`** (exact verdict `VALID FINAL`).
+- the action is **declared in the topology**;
+- `cert.tlcert` + `bundle.tlbundle` **pass the external `timelayer-verifier`** (exact verdict `VALID FINAL`); and
+- the receipt **attests this exact action**: the gate recomputes the envelope's
+  intent commitment (`intent_scheme: "tl-intent/1"`, see `tl-agent intent-digest`)
+  and passes it to the verifier via `--expect`. A receipt that is valid *in
+  itself* but was issued for a different action — or an envelope edited after
+  issuance — is refused (**no receipt transplant**).
 
-**Not enforced in v0.1.x.** Scope and policy fields (`read_only`, `network_allowed`, `write_allowed`) are declared in the bundle types but are **not enforced** — enforcement is on the roadmap (v0.2 candidate).
+**Binding policy (fail-closed at every fork).** `tl-intent/1` → recomputed
+commitment. Legacy envelope with `tlsig_doc_digest` → bound to the declared
+digest (weaker; cabinet compatibility). Neither → **STOP** `UNBOUND_RECEIPT`,
+unless you explicitly opt out with `TL_AGENT_ALLOW_UNBOUND=1`. Unknown
+`intent_scheme` → STOP. Verifier without `--expect` support → STOP.
+
+**Not enforced yet.** Scope and policy fields (`read_only`, `network_allowed`, `write_allowed`) are **committed** into the `tl-intent/1` digest (widening them after issuance breaks the receipt match) but their *runtime semantics* are not enforced — scope enforcement is on the roadmap. `execution_log.jsonl` (`tl-agent record`) is local diagnostics, **not execution proof**: it is unsigned and mutable; a real execution receipt contour is on the roadmap.
 
 TL-Agent is a **receipt gate and tamper-evident provenance layer, not a sandbox.**
 

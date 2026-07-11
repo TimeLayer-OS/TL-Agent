@@ -28,6 +28,7 @@ fn main() {
         "next"   => cmd_next(&args),
         "audit"  => cmd_audit(&args),
         "record" => cmd_record(&args),
+        "intent-digest" => cmd_intent_digest(&args),
         "help" | "--help" | "-h" => { print_usage(); process::exit(0); }
         other => {
             eprintln!("tl-agent: unknown command '{other}'");
@@ -178,6 +179,35 @@ fn cmd_record(args: &[String]) {
     }
 }
 
+// ── intent-digest ──────────────────────────────────────────────────────────
+
+fn cmd_intent_digest(args: &[String]) {
+    // tl-agent intent-digest <envelope.json>
+    // Prints the tl-intent/1 commitment for an envelope — the digest to
+    // notarize when issuing the receipt for this action.
+    if args.len() < 3 {
+        eprintln!("usage: tl-agent intent-digest <envelope.json>");
+        process::exit(1);
+    }
+    let path = PathBuf::from(&args[2]);
+    let text = match std::fs::read_to_string(&path) {
+        Ok(t) => t,
+        Err(e) => {
+            eprintln!("tl-agent: cannot read {}: {e}", path.display());
+            process::exit(1);
+        }
+    };
+    let envelope: timelayer_agent_sdk::Envelope = match serde_json::from_str(&text) {
+        Ok(e) => e,
+        Err(e) => {
+            eprintln!("tl-agent: invalid envelope JSON: {e}");
+            process::exit(1);
+        }
+    };
+    println!("{}", envelope.intent_digest_v1());
+    process::exit(0);
+}
+
 // ── helpers ────────────────────────────────────────────────────────────────
 
 fn load_bundle(bundle_dir: &PathBuf, verifier_hint: Option<&std::path::Path>) -> AgentBundle {
@@ -213,7 +243,9 @@ fn print_usage() {
     println!("  check   Run gate check for one action. Exit 0 = ALLOW, exit 1 = STOP.");
     println!("  next    List actions allowed after <action_id> per topology.");
     println!("  audit   Check every action in the bundle. Exit 0 = all valid.");
-    println!("  record  Append execution log entry (does NOT issue a .tlsig).");
+    println!("  record  Append execution log entry (diagnostics only — NOT execution proof).");
+    println!("  intent-digest  Print the tl-intent/1 commitment of an envelope.json");
+    println!("                 (the digest to notarize when issuing its receipt).");
     println!();
     println!("OPTIONS:");
     println!("  --verifier <path>   Path to timelayer-verifier binary.");

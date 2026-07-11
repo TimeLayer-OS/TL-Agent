@@ -61,16 +61,87 @@ impl AgentBundle {
             };
         }
 
-        // 4. Verify .tlsig offline
-        match self.verify_tlsig(action_id) {
-            Ok(true) => {} // valid, continue
+        // 4. Verify .tlsig offline — BOUND to this action's intent.
+        //
+        // P0-01 (audit 2026-07-11, "receipt transplant"): a receipt that is valid
+        // in itself proves nothing about THIS action. The binding policy, from
+        // strongest to weakest, fail-closed at every fork:
+        //   * intent_scheme == "tl-intent/1" — recompute the intent commitment
+        //     from the envelope's gate-relevant fields and require the receipt
+        //     to attest exactly it (--expect). Editing the envelope or
+        //     transplanting a foreign receipt breaks the match.
+        //   * legacy envelope with tlsig_doc_digest — bind to the declared
+        //     digest. Weaker (the field travels with the envelope), kept for
+        //     cabinet compatibility until issuers emit tl-intent/1.
+        //   * legacy envelope with neither — STOP by default; accepting a
+        //     receipt with no subject binding requires the explicit opt-out
+        //     TL_AGENT_ALLOW_UNBOUND=1.
+        //   * unknown intent_scheme — STOP (a newer protocol this SDK can't
+        //     enforce must not silently degrade to unbound).
+        let expected: Option<String> = match envelope.intent_scheme.as_str() {
+            "tl-intent/1" => Some(envelope.intent_digest_v1()),
+            "" => {
+                if !envelope.tlsig_doc_digest.is_empty() {
+                    Some(envelope.tlsig_doc_digest.clone())
+                } else if std::env::var("TL_AGENT_ALLOW_UNBOUND").as_deref() == Ok("1") {
+                    None // explicit legacy opt-out: pair validity only
+                } else {
+                    return CheckResult::Stop {
+                        action_id: action_id.to_string(),
+                        reason: StopReason::UnboundReceipt,
+                        message: format!(
+                            "UNBOUND_RECEIPT: action '{action_id}' declares no intent commitment \
+                             (no intent_scheme, no tlsig_doc_digest) — a valid-in-itself receipt \
+                             does not authorize THIS action. Re-issue the envelope with \
+                             intent_scheme=tl-intent/1, or set TL_AGENT_ALLOW_UNBOUND=1 to accept \
+                             legacy bundles (weaker guarantee)."
+                        ),
+                    };
+                }
+            }
+            other => {
+                return CheckResult::Stop {
+                    action_id: action_id.to_string(),
+                    reason: StopReason::UnboundReceipt,
+                    message: format!(
+                        "UNKNOWN_INTENT_SCHEME: '{other}' for action '{action_id}' — this SDK \
+                         cannot enforce it, refusing rather than degrading to unbound (fail-closed)"
+                    ),
+                };
+            }
+        };
+
+        if expected.is_some() && !self.verifier_supports_expect() {
+            return CheckResult::Stop {
+                action_id: action_id.to_string(),
+                reason: StopReason::TlsigInvalid,
+                message: format!(
+                    "VERIFIER_NO_EXPECT: installed timelayer-verifier cannot bind receipts to \
+                     subjects (--expect, v2.0.0+) — refusing to check action '{action_id}' \
+                     unbound (fail-closed)"
+                ),
+            };
+        }
+
+        let verify_result = match &expected {
+            Some(digest) => self.verify_tlsig_bound(action_id, digest),
+            None => self.verify_tlsig(action_id),
+        };
+        match verify_result {
+            Ok(true) => {} // valid (and bound, when a commitment was expected) — continue
             Ok(false) => {
+                let detail = match &expected {
+                    Some(d) => format!(
+                        "receipt did not pass verification BOUND to intent digest {d} — \
+                         either the pair is invalid, or it attests a different action \
+                         (receipt transplant / edited envelope)"
+                    ),
+                    None => "notarial proof did not pass verification".to_string(),
+                };
                 return CheckResult::Stop {
                     action_id: action_id.to_string(),
                     reason: StopReason::TlsigInvalid,
-                    message: format!(
-                        "TLSIG_INVALID: notarial proof for action '{action_id}' did not pass verification"
-                    ),
+                    message: format!("TLSIG_INVALID: action '{action_id}': {detail}"),
                 };
             }
             Err(SdkError::VerifierNotFound(path)) => {

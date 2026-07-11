@@ -157,6 +157,122 @@ fn segment_bundle_loads() {
     }
 }
 
+// ── P0-01: receipt ↔ action binding (audit 2026-07-11) ─────────────────────
+
+/// Recursive copy of the example bundle into a temp dir we can mutate.
+fn copy_bundle_to_tmp() -> tempfile::TempDir {
+    fn copy_dir(src: &Path, dst: &Path) {
+        std::fs::create_dir_all(dst).unwrap();
+        for entry in std::fs::read_dir(src).unwrap() {
+            let entry = entry.unwrap();
+            let to = dst.join(entry.file_name());
+            if entry.file_type().unwrap().is_dir() {
+                copy_dir(&entry.path(), &to);
+            } else {
+                std::fs::copy(entry.path(), &to).unwrap();
+            }
+        }
+    }
+    let tmp = tempfile::tempdir().expect("tempdir");
+    copy_dir(Path::new(EXAMPLE_BUNDLE), tmp.path());
+    tmp
+}
+
+#[test]
+fn transplanted_receipt_is_refused() {
+    let v = verifier_or_skip!();
+    let tmp = copy_bundle_to_tmp();
+    // A perfectly VALID receipt pair from another action, dropped into this
+    // action's directory. The pair verifies in itself — the gate must still
+    // refuse, because it does not attest THIS action's intent digest.
+    let receipts = tmp.path().join("receipts");
+    for f in ["cert.tlcert", "bundle.tlbundle"] {
+        std::fs::copy(
+            receipts.join("action_summarize").join(f),
+            receipts.join("action_read_files").join(f),
+        )
+        .unwrap();
+    }
+    let bundle = AgentBundle::load_with_verifier(tmp.path(), Some(&v)).unwrap();
+    match bundle.check_action("action_read_files") {
+        CheckResult::Stop { reason, .. } => assert_eq!(reason, StopReason::TlsigInvalid),
+        CheckResult::Allow { .. } => panic!("receipt transplant must be refused"),
+    }
+}
+
+#[test]
+fn edited_envelope_is_refused() {
+    let v = verifier_or_skip!();
+    let tmp = copy_bundle_to_tmp();
+    // Widen the scope AFTER issuance: read_only -> false. The recomputed
+    // intent digest changes, the receipt attests the old one -> STOP.
+    let env_path = tmp
+        .path()
+        .join("receipts/action_read_files/envelope.json");
+    let mut v_json: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(&env_path).unwrap()).unwrap();
+    v_json["scope"]["read_only"] = serde_json::Value::Bool(false);
+    v_json["scope"]["write_allowed"] = serde_json::Value::Bool(true);
+    std::fs::write(&env_path, serde_json::to_string_pretty(&v_json).unwrap()).unwrap();
+
+    let bundle = AgentBundle::load_with_verifier(tmp.path(), Some(&v)).unwrap();
+    match bundle.check_action("action_read_files") {
+        CheckResult::Stop { reason, .. } => assert_eq!(reason, StopReason::TlsigInvalid),
+        CheckResult::Allow { .. } => panic!("edited envelope must be refused"),
+    }
+}
+
+#[test]
+fn unbound_envelope_policy() {
+    let v = verifier_or_skip!();
+    let tmp = copy_bundle_to_tmp();
+    // Strip every binding from the envelope: no intent_scheme, no
+    // tlsig_doc_digest. Default policy: STOP(UnboundReceipt).
+    let env_path = tmp
+        .path()
+        .join("receipts/action_read_files/envelope.json");
+    let mut v_json: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(&env_path).unwrap()).unwrap();
+    v_json.as_object_mut().unwrap().remove("intent_scheme");
+    v_json.as_object_mut().unwrap().remove("tlsig_doc_digest");
+    std::fs::write(&env_path, serde_json::to_string_pretty(&v_json).unwrap()).unwrap();
+
+    let bundle = AgentBundle::load_with_verifier(tmp.path(), Some(&v)).unwrap();
+    match bundle.check_action("action_read_files") {
+        CheckResult::Stop { reason, .. } => assert_eq!(reason, StopReason::UnboundReceipt),
+        CheckResult::Allow { .. } => panic!("unbound envelope must be refused by default"),
+    }
+
+    // Explicit legacy opt-out: TL_AGENT_ALLOW_UNBOUND=1 accepts pair validity.
+    // (Set/removed inside this single test to avoid env races across threads.)
+    std::env::set_var("TL_AGENT_ALLOW_UNBOUND", "1");
+    let allowed = matches!(
+        bundle.check_action("action_read_files"),
+        CheckResult::Allow { .. }
+    );
+    std::env::remove_var("TL_AGENT_ALLOW_UNBOUND");
+    assert!(allowed, "legacy opt-out must accept a valid unbound pair");
+}
+
+#[test]
+fn unknown_intent_scheme_is_refused() {
+    let v = verifier_or_skip!();
+    let tmp = copy_bundle_to_tmp();
+    let env_path = tmp
+        .path()
+        .join("receipts/action_read_files/envelope.json");
+    let mut v_json: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(&env_path).unwrap()).unwrap();
+    v_json["intent_scheme"] = serde_json::Value::String("tl-intent/99".into());
+    std::fs::write(&env_path, serde_json::to_string_pretty(&v_json).unwrap()).unwrap();
+
+    let bundle = AgentBundle::load_with_verifier(tmp.path(), Some(&v)).unwrap();
+    match bundle.check_action("action_read_files") {
+        CheckResult::Stop { reason, .. } => assert_eq!(reason, StopReason::UnboundReceipt),
+        CheckResult::Allow { .. } => panic!("unknown scheme must fail closed, not degrade"),
+    }
+}
+
 #[test]
 fn verifier_available() {
     let v = verifier_or_skip!();

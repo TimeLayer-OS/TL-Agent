@@ -148,6 +148,24 @@ impl AgentBundle {
 
         verifier::verify_tlsig(&self.verifier_path, cert_path, bundle_path)
     }
+
+    /// Bound verification: the receipt must attest exactly `expected_hex`.
+    pub(crate) fn verify_tlsig_bound(
+        &self,
+        action_id: &str,
+        expected_hex: &str,
+    ) -> Result<bool, SdkError> {
+        let (_, cert_path, bundle_path) = self.envelopes.get(action_id).ok_or_else(|| {
+            SdkError::MissingReceipt(action_id.to_string())
+        })?;
+
+        verifier::verify_tlsig_expect(&self.verifier_path, cert_path, bundle_path, expected_hex)
+    }
+
+    /// True when the installed verifier can bind receipts to subjects (--expect).
+    pub fn verifier_supports_expect(&self) -> bool {
+        verifier::verifier_supports_expect(&self.verifier_path)
+    }
 }
 
 // ---- helpers ----

@@ -131,7 +131,8 @@ agent-bundle/
 tl-agent check  <bundle_dir> <action_id>              Гейт-проверка. Exit 0=ALLOW, 1=STOP.
 tl-agent next   <bundle_dir> <action_id>              Список допустимых следующих действий по топологии.
 tl-agent audit  <bundle_dir>                          Проверка каждого действия в bundle.
-tl-agent record <bundle_dir> <action_id> <sha256>     Запись выполнения в execution_log.jsonl.
+tl-agent record <bundle_dir> <action_id> <sha256>     Запись в execution_log.jsonl (диагностика, не доказательство).
+tl-agent intent-digest <envelope.json>                Печатает tl-intent/1 commitment для чеканки квитанции.
 
 Опции:
   --verifier <path>    Путь к бинарнику timelayer-verifier.
@@ -168,15 +169,30 @@ cargo build --release
 
 ---
 
-## Что обеспечивает v0.1.x — и что нет
+## Что обеспечивает v0.2.x — и что нет
 
-**v0.1.x обеспечивает квитанционный гейт.** Действие выполняется только если:
+**v0.2.x обеспечивает квитанционный гейт с привязкой к действию.** Действие выполняется только если:
 
 - его envelope **активен** — не отозван и не истёк;
-- действие **объявлено в topology**; и
-- `cert.tlcert` + `bundle.tlbundle` **проходят внешний `timelayer-verifier`** (точный вердикт `VALID FINAL`).
+- действие **объявлено в topology**;
+- `cert.tlcert` + `bundle.tlbundle` **проходят внешний `timelayer-verifier`** (точный вердикт `VALID FINAL`); и
+- квитанция **заверяет именно это действие**: гейт пересчитывает commitment намерения
+  из полей envelope (`intent_scheme: "tl-intent/1"`, см. `tl-agent intent-digest`) и передаёт
+  его верификатору через `--expect`. Квитанция, валидная *сама по себе*, но выпущенная на
+  другое действие — или envelope, отредактированный после выпуска, — отклоняется
+  (**никакого receipt transplant**).
 
-**В v0.1.x не обеспечивается.** Поля scope и политик (`read_only`, `network_allowed`, `write_allowed`) объявлены в типах bundle, но **не применяются** — применение в дорожной карте (кандидат v0.2).
+**Политика привязки (fail-closed на каждой развилке).** `tl-intent/1` → пересчитанный
+commitment. Легаси-envelope с `tlsig_doc_digest` → привязка к объявленному дайджесту
+(слабее; совместимость с кабинетом). Ни того ни другого → **STOP** `UNBOUND_RECEIPT`,
+если явно не разрешено `TL_AGENT_ALLOW_UNBOUND=1`. Неизвестная `intent_scheme` → STOP.
+Верификатор без `--expect` → STOP.
+
+**Пока не обеспечивается.** Поля scope (`read_only`, `network_allowed`, `write_allowed`)
+**входят в commitment** `tl-intent/1` (расширение scope после выпуска ломает совпадение
+квитанции), но их *рантайм-семантика* не применяется — в дорожной карте.
+`execution_log.jsonl` (`tl-agent record`) — локальная диагностика, **не доказательство
+исполнения**: не подписан и изменяем; настоящий контур execution receipt — в дорожной карте.
 
 TL-Agent — это **квитанционный гейт и неподделываемый слой провенанса, а не песочница.**
 
