@@ -8,6 +8,15 @@ TL-Agent gives an AI agent its permissions as notarial receipts from the [TimeLa
 
 > **NO VALID RECEIPT → NO ACTION**
 
+## Why you might care
+
+- **You run AI agents** that touch files, money, or customers — and "the model said done"
+  is not something you can show a regulator or an angry client.
+- **EU AI Act, arts. 12/19** (from 2026-08-02) require tamper-evident records of high-risk
+  AI actions. A receipt chain that verifies offline is exactly that, with no log to protect.
+- **You need it to work disconnected.** The air-gapped USB mode carries permissions and
+  proofs on a stick — for environments where "call the license server" is not an answer.
+
 ---
 
 ## Why this, not "just add checks in the agent's code"
