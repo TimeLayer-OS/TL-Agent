@@ -57,7 +57,7 @@ Never run an unpinned binary. Pick an exact release, download the asset **and** 
 `SHA256SUMS.txt` published with it, and verify before you run it:
 
 ```bash
-VER=v0.2.0
+VER=v0.2.1
 BASE="https://github.com/TimeLayer-OS/TL-Agent/releases/download/$VER"
 curl -fsSL "$BASE/tl-agent-linux-x86_64.zip" -o tl-agent.zip
 curl -fsSL "$BASE/SHA256SUMS.txt"            -o SHA256SUMS.txt
