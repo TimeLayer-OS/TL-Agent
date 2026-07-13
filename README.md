@@ -2,6 +2,13 @@
 
 **English** · [Русский](README.ru.md)
 
+> **FOR AGENTS.** Gate one action, fail-closed:
+> ```bash
+> git clone …/TL-Agent && cd TL-Agent
+> tl-agent check example-bundle action_read_files   # ALLOW | STOP(reason)
+> ```
+> Working method: [`AGENTS.md`](AGENTS.md).
+
 **An agent cannot authorize its own actions. And cannot rewrite the history of what it did.**
 
 TL-Agent gives an AI agent its permissions as notarial receipts from the [TimeLayer](https://timelayer-os.com) network — receipts it cannot issue itself. Every permitted action is backed by one. The agent's history is tamper-evident and verifiable offline by any third party.
@@ -218,9 +225,9 @@ cargo build --release
 
 ---
 
-## What v0.1.x enforces — and what it does not
+## What the current release enforces — and what it does not
 
-**v0.2.x enforces the receipt gate, bound to the action.** An action runs only if:
+**The current release enforces the receipt gate, bound to the action.** An action runs only if:
 
 - its envelope is **active** — not revoked, not expired;
 - the action is **declared in the topology**;
