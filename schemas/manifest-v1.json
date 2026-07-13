@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://timelayer-os.com/schemas/tl-agent/manifest-v1.json",
+  "title": "TL-Agent bundle manifest",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "topology_id",
+    "actions"
+  ],
+  "properties": {
+    "topology_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "tl_agent_version": {
+      "type": "string"
+    },
+    "bundle_id": {
+      "type": "string"
+    },
+    "bundle_type": {
+      "type": "string"
+    },
+    "segment_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "owner_id": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "receipt_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "agent_can_write": {
+      "type": "boolean"
+    },
+    "agent_can_issue_receipts": {
+      "type": "boolean"
+    },
+    "no_receipt_no_action": {
+      "type": "boolean"
+    },
+    "tlsig_roster": {
+      "type": "string"
+    },
+    "tlsig_k": {
+      "type": "integer"
+    },
+    "tlsig_mode": {
+      "type": "string"
+    }
+  }
+}

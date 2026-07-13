@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://timelayer-os.com/schemas/tl-agent/envelope-v1.json",
+  "title": "TL-Agent action envelope",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "receipt_id",
+    "topology_id",
+    "action_id",
+    "status"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "topology_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "action_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "active",
+        "revoked",
+        "expired"
+      ]
+    },
+    "receipt_type": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "issued_by": {
+      "type": "string"
+    },
+    "issued_at": {
+      "type": "string"
+    },
+    "valid_from": {
+      "type": "string"
+    },
+    "valid_until": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "previous_receipt_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "allowed_next_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "read_only": {
+          "type": "boolean"
+        },
+        "network_allowed": {
+          "type": "boolean"
+        },
+        "write_allowed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "intent_scheme": {
+      "type": "string",
+      "description": "'tl-intent/1' enables --expect binding; empty = legacy"
+    },
+    "tlsig_doc_digest": {
+      "type": "string"
+    },
+    "tlsig_roster_epoch": {
+      "type": "integer"
+    }
+  }
+}

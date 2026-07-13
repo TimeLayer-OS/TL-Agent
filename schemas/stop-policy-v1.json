@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://timelayer-os.com/schemas/tl-agent/stop-policy-v1.json",
+  "title": "TL-Agent stop policy",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "stop_on_missing_receipt": {
+      "type": "boolean"
+    },
+    "stop_on_invalid_receipt": {
+      "type": "boolean"
+    },
+    "stop_on_invalid_tlsig": {
+      "type": "boolean"
+    },
+    "stop_on_scope_mismatch": {
+      "type": "boolean"
+    },
+    "stop_on_context_uncertainty": {
+      "type": "boolean"
+    },
+    "stop_on_topology_conflict": {
+      "type": "boolean"
+    },
+    "stop_on_revoked_receipt": {
+      "type": "boolean"
+    },
+    "stop_on_expired_receipt": {
+      "type": "boolean"
+    },
+    "require_user_review_after_stop": {
+      "type": "boolean"
+    }
+  }
+}

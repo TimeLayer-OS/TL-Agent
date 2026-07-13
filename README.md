@@ -2,6 +2,8 @@
 
 **English** · [Русский](README.ru.md)
 
+[![ci](https://github.com/TimeLayer-OS/TL-Agent/actions/workflows/ci.yml/badge.svg)](https://github.com/TimeLayer-OS/TL-Agent/actions/workflows/ci.yml)
+
 > **FOR AGENTS.** Gate one action, fail-closed:
 > ```bash
 > git clone …/TL-Agent && cd TL-Agent
@@ -49,14 +51,22 @@ TL-Agent gives an AI agent its permissions as notarial receipts from the [TimeLa
 
 ## Quick start
 
-### 1. Download `tl-agent`
+### 1. Download `tl-agent` — pinned and checksum-verified
 
-Grab the latest binary from [Releases](../../releases/latest).
+Never run an unpinned binary. Pick an exact release, download the asset **and** the
+`SHA256SUMS.txt` published with it, and verify before you run it:
 
 ```bash
-chmod +x tl-agent
+VER=v0.2.0
+BASE="https://github.com/TimeLayer-OS/TL-Agent/releases/download/$VER"
+curl -fsSL "$BASE/tl-agent-linux-x86_64.zip" -o tl-agent.zip
+curl -fsSL "$BASE/SHA256SUMS.txt"            -o SHA256SUMS.txt
+grep " tl-agent-linux-x86_64.zip$" SHA256SUMS.txt | sha256sum -c -   # must print: OK
+unzip -o tl-agent.zip && chmod +x tl-agent
 ./tl-agent --help
 ```
+
+Same discipline as [`receipt-driven-examples/run.sh`](https://github.com/TimeLayer-OS/receipt-driven-examples/blob/main/run.sh): a compromised or swapped release must fail the check before execution.
 
 ### 2. Gate-check an action before running it
 

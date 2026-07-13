@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://timelayer-os.com/schemas/tl-agent/agent-policy-v1.json",
+  "title": "TL-Agent agent policy",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "agent_can_issue_receipts": {
+      "type": "boolean"
+    },
+    "agent_can_modify_receipts": {
+      "type": "boolean"
+    },
+    "agent_can_modify_topology": {
+      "type": "boolean"
+    },
+    "agent_can_request_next_receipt": {
+      "type": "boolean"
+    },
+    "agent_can_execute_without_receipt": {
+      "type": "boolean"
+    },
+    "agent_must_stop_on_missing_context": {
+      "type": "boolean"
+    },
+    "agent_must_report_invalid_receipt": {
+      "type": "boolean"
+    },
+    "text_is_not_proof": {
+      "type": "boolean"
+    }
+  }
+}
