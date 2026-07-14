@@ -3,6 +3,7 @@
 [English](README.md) · **Русский**
 
 [![ci](https://github.com/TimeLayer-OS/TL-Agent/actions/workflows/ci.yml/badge.svg)](https://github.com/TimeLayer-OS/TL-Agent/actions/workflows/ci.yml)
+[![receipt-verified](receipt-verified.svg)](https://github.com/TimeLayer-OS/timelayer-verifier/tree/main/audit/2026-07-14)
 
 > **ДЛЯ АГЕНТОВ.** Гейт одного действия, fail-closed:
 > ```bash
